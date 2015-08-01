@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <stddef.h>
 
+// TODO: move these somewhere useful
 #define min(x, y) ((x) < (y) ? (x) : (y))
 #define max(x, y) ((x) > (y) ? (x) : (y))
 #define clamp(x, start, end) min(max((x), (start)), (end))
@@ -109,13 +110,11 @@ void memory_reserve(uint64_t base, uint64_t size) {
 
 // iterator for pages of existing memory
 void memory_pages_next(uint64_t *iterator, uint64_t *out_start, uint64_t *out_end) {
-	uint64_t page_start = 0, page_end = 0;
-
 	for (; *iterator < memory.count; ++*iterator) {
 		struct memory_region *region = &memory.regions[*iterator];
 
-		page_start = (region->base + PAGE_SIZE - 1) >> PAGE_SHIFT;
-		page_end = (region->base + region->size) >> PAGE_SHIFT;
+		uint64_t page_start = (region->base + PAGE_SIZE - 1) >> PAGE_SHIFT;
+		uint64_t page_end = (region->base + region->size) >> PAGE_SHIFT;
 
 		// skip regions smaller than one page
 		if (page_start >= page_end)
@@ -174,6 +173,11 @@ void memory_free_next(uint64_t *iterator, uint64_t *out_start, uint64_t *out_end
 	*iterator = (uint64_t)-1;
 }
 
+uint64_t memory_end() {
+	assert(memory.count > 0);
+	return memory.regions[memory.count - 1].base + memory.regions[memory.count - 1].size;
+}
+
 // find a free region in [start, end) with a power-of-two alignment
 uint64_t memory_find(uint64_t start, uint64_t end, uint64_t size, uint64_t align) {
 	uint64_t i = 0, found_start, found_end;
@@ -188,4 +192,13 @@ uint64_t memory_find(uint64_t start, uint64_t end, uint64_t size, uint64_t align
 	}
 
 	return 0;
+}
+
+void *memory_alloc(uint64_t start, uint64_t end, uint64_t size, uint64_t align) {
+	uint64_t phys = memory_find(start, end, size, align);
+	memory_reserve(phys, size);
+
+	void *virt = VIRT_DIRECT(phys);
+	memset(virt, 0, size);
+	return virt;
 }

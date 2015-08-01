@@ -25,7 +25,7 @@ boot_OBJECTS := $(patsubst %.c,%.o,$(boot_SOURCES:src=obj))
 boot_DEPENDS := $(patsubst %.c,%.d,$(boot_SOURCES:src=obj))
 
 img/EFI/BOOT/BOOTX64.EFI: $(boot_SOURCES) | obj/ img/EFI/BOOT/
-	$(boot_CC) $(CFLAGS) -Wall -Wextra -c -Iinclude -Iedk2 -Iedk2/X64 -o obj/boot.o src/boot.c
+	$(boot_CC) $(CFLAGS) -Wall -Wextra -c -Iinclude -Iedk2-install -Iedk2-install/X64 -o obj/boot.o src/boot.c
 	$(boot_LD) --oformat pei-x86-64 --subsystem 10 -pie -e UefiMain -o img/EFI/BOOT/BOOTX64.EFI obj/boot.o
 
 # kernel
@@ -33,7 +33,7 @@ img/EFI/BOOT/BOOTX64.EFI: $(boot_SOURCES) | obj/ img/EFI/BOOT/
 kernel_CC := x86_64-elf-gcc
 kernel_LD := x86_64-elf-ld
 
-kernel_OBJECTS := obj/startup.o obj/kernel.o obj/interrupt.o obj/entry.o obj/serial.o obj/memory.o obj/paging.o obj/segment.o obj/kprintf.o obj/panic.o obj/stdlib.o obj/string.o obj/ctype.o obj/acpi/osl.o obj/acpi/acpica.o
+kernel_OBJECTS := obj/startup.o obj/segment.o obj/kernel.o obj/interrupt.o obj/entry.o obj/memory.o obj/paging.o obj/serial.o obj/kprintf.o obj/panic.o obj/acpi/osl.o obj/acpi/acpica.o obj/libc/stdlib.o obj/libc/string.o obj/libc/ctype.o
 kernel_DEPENDS := $(patsubst %.o,%.d,$(kernel_OBJECTS))
 
 img/kernel: $(kernel_OBJECTS) src/kernel.ld | img/EFI/BOOT/

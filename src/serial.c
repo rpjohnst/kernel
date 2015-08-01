@@ -5,7 +5,7 @@ void serial_init(uint16_t port) {
 	outb(port + 1, 0x00); // disable interrupts
 
 	outb(port + 3, 0x80); // enable DLAB
-	outb(port + 0, 0x03); // set divisor to 3
+	outb(port + 0, 0x01); // set divisor to 1
 	outb(port + 1, 0x00);
 
 	outb(port + 3, 0x03); // 8 bits, no parity, one stop bit

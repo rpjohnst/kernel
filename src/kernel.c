@@ -1,6 +1,6 @@
 #include "serial.h"
-#include "memory.h"
 #include "interrupt.h"
+#include "memory.h"
 #include "io.h"
 #include <paging.h>
 #include <kprintf.h>
@@ -18,8 +18,6 @@ void kernel_init(
 	interrupt_init();
 
 	serial_init(COM1);
-
-	// physical memory manager
 
 	// TODO: factor out temporary mappings
 	extern uint64_t pml4[], pd_map[];
@@ -47,19 +45,28 @@ void kernel_init(
 			[efi_runtime_data] = "runtime data",
 			[efi_conventional] = "free ram",
 			[efi_unusable] = "unusable",
-			[efi_acpi_reclaim] = "acpi reclaimable",
+			[efi_acpi_reclaim] = "acpi reclaim",
 			[efi_acpi_nvs] = "acpi nvs",
 			[efi_memory_mapped_io] = "mmio",
 			[efi_memory_mapped_port] = "mm port",
-			[efi_pal] = "pal",
+			[efi_pal] = "pal code",
 		};
 
-		uint64_t size = mem->pages * 0x1000;
+		uint64_t size = mem->pages * PAGE_SIZE;
 
 		kprintf(
-			"efi memory: %#016lx-%#016lx %016lx %s\n",
+			"efi [%#013lx-%#013lx) [%3s %2s %2s %2s %3s %2s %2s %2s %2s] %s\n",
 			mem->physical, mem->physical + size,
-			mem->flags, efi_memory_name[mem->type]
+			mem->flags & efi_memory_runtime ? "run" : "",
+			mem->flags & efi_memory_xp ? "xp" : "",
+			mem->flags & efi_memory_rp ? "rp" : "",
+			mem->flags & efi_memory_wp ? "wp" : "",
+			mem->flags & efi_memory_uce ? "uce" : "",
+			mem->flags & efi_memory_wb ? "wb" : "",
+			mem->flags & efi_memory_wt ? "wt" : "",
+			mem->flags & efi_memory_wc ? "wc" : "",
+			mem->flags & efi_memory_uc ? "uc" : "",
+			efi_memory_name[mem->type]
 		);
 
 		if (mem->flags | efi_memory_runtime) {
@@ -83,13 +90,13 @@ void kernel_init(
 	memory_reserve((uint64_t)kernel_start - KERNEL_BASE, kernel_end - kernel_start);
 
 	// direct mapping of ram
-	uint64_t i = 0, start_frame, end_frame;
-	while (memory_pages_next(&i, &start_frame, &end_frame), i != (uint64_t)-1) {
-		uint64_t start_phys = start_frame << PAGE_SHIFT;
-		uint64_t end_phys = end_frame << PAGE_SHIFT;
-		kprintf("mem [%#010lx-%#010lx]\n", start_phys, end_phys - 1);
-
-		direct_map(start_phys, end_phys);
+	{
+		uint64_t i = 0, start_frame, end_frame;
+		while (memory_pages_next(&i, &start_frame, &end_frame), i != (uint64_t)-1) {
+			uint64_t start_phys = start_frame << PAGE_SHIFT;
+			uint64_t end_phys = end_frame << PAGE_SHIFT;
+			direct_map(start_phys, end_phys);
+		}
 	}
 
 	// TODO: completely clean up virtual address space
@@ -105,8 +112,7 @@ void kernel_init(
 		acpi_tables, sizeof(acpi_tables) / sizeof(acpi_tables[0]), false
 	);
 	if (ACPI_FAILURE(status)) {
-		kprintf("acpi error %d\n", status);
-		for (;;);
+		panic("acpi error %d\n", status);
 	}
 	serial_write_chars("\n", 1);
 
@@ -133,7 +139,6 @@ void kernel_init(
 
 	*(uint32_t*)0xffffffffc0000320 = 0x00020030;
 	*(uint32_t*)0xffffffffc0000380 = 30000000;
-	__asm__ volatile ("sti");
 
 	// mask pic
 	kprintf("madt flags: %x\n", Madt->Flags);
@@ -142,5 +147,9 @@ void kernel_init(
 		outb(0x21, 0xff);
 	}
 
-	for (;;);
+	__asm__ volatile ("sti");
+	for (;;) {
+		char c = serial_read(COM1);
+		serial_write(COM1, c);
+	}
 }

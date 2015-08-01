@@ -1,5 +1,7 @@
 #include <paging.h>
 
+// kernel_start(void *map, size_t map_size, size_t descriptor_size, void *rsdp)
+// main kernel entry point- takes UEFI memory map and ACPI RSDP in SysV ABI
 	.section .text.kernel_start
 	.global kernel_start
 kernel_start:

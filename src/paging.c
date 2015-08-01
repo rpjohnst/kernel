@@ -84,16 +84,16 @@ static int split_range(struct range ranges[5], uint64_t start, uint64_t end) {
 	static const char *const sizes[] = { "4k", "2M", "1G" };
 	for (int i = 0; i < range; i++) {
 		kprintf(
-			" [%#010lx-%#010lx] %s\n", ranges[i].start, ranges[i].end - 1, sizes[ranges[i].level]
+			" [%#013lx-%#013lx) %s\n", ranges[i].start, ranges[i].end, sizes[ranges[i].level]
 		);
 	}
 
 	return range;
 }
 
-// reserve 3 page tables to get started
+// reserve 2 page tables to get started
 // TODO: how many do we really need, given the boostrap direct mapping?
-static uint64_t init_page_tables[3][PAGE_ENTRIES] __attribute__((aligned(PAGE_SIZE)));
+static uint64_t init_page_tables[2][PAGE_ENTRIES] __attribute__((aligned(PAGE_SIZE)));
 static unsigned int init_page_table = 0;
 
 static uint64_t mapped_top = 0;
@@ -103,15 +103,11 @@ static void *alloc_page_direct() {
 		return VIRT_DIRECT(PHYS_KERNEL(init_page_tables[init_page_table++]));
 
 	// TODO: what to do about the bottom page?
-	uint64_t page = memory_find(PAGE_SIZE, mapped_top, PAGE_SIZE, PAGE_SIZE);
-	memory_reserve(page, PAGE_SIZE);
-	
-	void *addr = VIRT_DIRECT(page);
-	memset(addr, 0, PAGE_SIZE);
+	void *page = memory_alloc(PAGE_SIZE, mapped_top, PAGE_SIZE, PAGE_SIZE);
 
-	kprintf(" page table %#010lx\n", page);
+	kprintf(" page table %#013lx\n", PHYS_DIRECT(page));
 
-	return addr;
+	return page;
 }
 
 static void direct_map_pt(uint64_t *pt, uint64_t start_phys, uint64_t end_phys, uint8_t level) {
@@ -198,6 +194,8 @@ static void direct_map_pml4(uint64_t start_phys, uint64_t end_phys, uint8_t leve
 
 // TODO: unmap memory in the first GB that's hard-coded in startup.S
 void direct_map(uint64_t start_phys, uint64_t end_phys) {
+	kprintf("mem [%#013lx-%#013lx)\n", start_phys, end_phys);
+
 	struct range ranges[5];
 	int n = split_range(ranges, start_phys, end_phys);
 
