@@ -45,8 +45,13 @@ void *AcpiOsMapMemory(ACPI_PHYSICAL_ADDRESS PhysicalAddress, ACPI_SIZE Length) {
 void AcpiOsUnmapMemory(void *where, ACPI_SIZE length) {}
 
 ACPI_STATUS AcpiOsGetPhysicalAddress(void *LogicalAddress, ACPI_PHYSICAL_ADDRESS *PhysicalAddress) {
-	*PhysicalAddress = (ACPI_PHYSICAL_ADDRESS)LogicalAddress;
-	return AE_NOT_IMPLEMENTED;
+	uintptr_t virt = (uintptr_t) LogicalAddress;
+	if (virt >= KERNEL_BASE)
+		*PhysicalAddress = PHYS_KERNEL(LogicalAddress);
+	else
+		*PhysicalAddress = PHYS_DIRECT(LogicalAddress);
+
+	return AE_OK;
 }
 
 void *AcpiOsAllocate(ACPI_SIZE Size) {

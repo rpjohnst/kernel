@@ -8,9 +8,6 @@
 // TODO: consider renaming to kernel_pml4 or something
 extern uint64_t pml4[PAGE_ENTRIES];
 
-#define round_up(x, y) ((((x) - 1) | ((__typeof__(x))((y) - 1))) + 1)
-#define round_down(x, y) ((x) & ~((__typeof__(x))((y) - 1)))
-
 struct range {
 	uint64_t start;
 	uint64_t end;

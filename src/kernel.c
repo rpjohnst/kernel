@@ -1,6 +1,8 @@
 #include "serial.h"
 #include "interrupt.h"
 #include "memory.h"
+#include "cache.h"
+#include "page.h"
 #include "io.h"
 #include <paging.h>
 #include <kprintf.h>
@@ -102,6 +104,9 @@ void kernel_init(
 	// TODO: completely clean up virtual address space
 	pml4[0] = 0;
 	write_cr3((uint64_t)pml4 - KERNEL_BASE);
+
+	page_alloc_init();
+	cache_init();
 
 	// acpi
 

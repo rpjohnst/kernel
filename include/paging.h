@@ -41,6 +41,9 @@
 
 #ifndef __ASSEMBLY__
 
+#define round_up(x, y) ((((x) - 1) | ((__typeof__(x))((y) - 1))) + 1)
+#define round_down(x, y) ((x) & ~((__typeof__(x))((y) - 1)))
+
 #include <stdint.h>
 
 void direct_map(uint64_t start_phys, uint64_t end_phys);
