@@ -1,17 +1,10 @@
 #include "page.h"
 #include "memory.h"
-#include "list.h"
 #include <paging.h>
 #include <stdalign.h>
 #include <limits.h>
-#include <stdint.h>
 
 // TODO: larger pages
-
-struct page {
-	struct list free;
-	uint32_t ref_count;
-};
 
 static uint64_t num_frames;
 static struct page *page_frames;
@@ -68,5 +61,5 @@ void *page_address(struct page *page) {
 }
 
 struct page *page_from_address(void *address) {
-	return &page_frames[(intptr_t)address >> PAGE_SHIFT];
+	return &page_frames[PHYS_DIRECT(address) >> PAGE_SHIFT];
 }

@@ -1,6 +1,6 @@
-#include "cache.h"
 #include "page.h"
 #include "list.h"
+#include <cache.h>
 #include <paging.h>
 #include <assert.h>
 #include <stddef.h>
@@ -39,6 +39,25 @@ static struct cache caches = {
 	.object_size = sizeof(struct cache),
 };
 
+// TODO: go bigger once we have bigger slab sizes
+static struct {
+	size_t size;
+	struct cache *cache;
+} sized_caches[] = {
+	{ 8, NULL },
+	{ 16, NULL },
+	{ 32, NULL },
+	{ 64, NULL },
+	{ 96, NULL },
+	{ 128, NULL },
+	{ 192, NULL },
+	{ 256, NULL },
+	{ 512, NULL },
+	{ 1024, NULL },
+	{ 2048, NULL },
+	{ 0, NULL },
+};
+
 static uint32_t calc_slab_capacity(uint32_t object_size) {
 	uint32_t header = sizeof(struct slab);
 	uint32_t entry = sizeof(uint32_t);
@@ -52,6 +71,9 @@ static uint32_t calc_slab_capacity(uint32_t object_size) {
 
 void cache_init(void) {
 	caches.slab_capacity = calc_slab_capacity(caches.object_size);
+
+	for (int i = 0; sized_caches[i].size != 0; i++)
+		sized_caches[i].cache = cache_create(sized_caches[i].size);
 }
 
 struct cache *cache_create(uint32_t object_size) {
@@ -91,6 +113,9 @@ static struct slab *slab_create(struct cache *cache) {
 
 	struct slab *slab = page_address(page);
 	list_init(&slab->list);
+
+	page->cache = cache;
+	page->slab = slab;
 
 	slab->objects = (char*)slab + sizeof(struct slab) + cache->slab_capacity * sizeof(uint32_t);
 
@@ -148,4 +173,24 @@ void cache_free(struct cache *cache, void *object) {
 		list_del(&slab->list);
 		list_add_head(&slab->list, &cache->partial);
 	}
+}
+
+// TODO: fall back on large page allocation once we have large pages
+void *kmalloc(size_t size) {
+	for (int i = 0; sized_caches[i].size != 0; i++) {
+		if (size > sized_caches[i].size)
+			continue;
+
+		return cache_alloc(sized_caches[i].cache);
+	}
+
+	return NULL;
+}
+
+void kfree(void *ptr) {
+	if (ptr == NULL)
+		return;
+
+	struct page *page = page_from_address(ptr);
+	cache_free(page->cache, ptr);
 }

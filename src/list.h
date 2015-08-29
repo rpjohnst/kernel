@@ -1,3 +1,6 @@
+#ifndef LIST_H
+#define LIST_H
+
 #include <stddef.h>
 #include <stdbool.h>
 
@@ -41,3 +44,5 @@ static inline bool list_empty(struct list *list) {
 }
 
 #define containerof(ptr, type, member) ((type*)((char*)(ptr) - offsetof(type, member)))
+
+#endif
