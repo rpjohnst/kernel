@@ -10,6 +10,12 @@ static inline uint8_t inb(uint16_t port) {
 	return result;
 }
 
+// cpuid
+
+static inline void cpuid(uint32_t i, uint32_t *eax, uint32_t *ebx, uint32_t *ecx, uint32_t *edx) {
+	__asm__ volatile ("cpuid" : "=a"(*eax), "=b"(*ebx), "=c"(*ecx), "=d"(*edx) : "a"(i));
+}
+
 // msrs
 
 enum msr {

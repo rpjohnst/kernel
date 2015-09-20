@@ -129,7 +129,7 @@ static void pic_disable(void) {
 static volatile uint32_t *lapic;
 static uint32_t lapic_frequency;
 
-void apic_init(uint64_t lapic_address, bool legacy_pic) {
+void apic_init(uint32_t lapic_address, bool legacy_pic) {
 	if (legacy_pic)
 		pic_disable();
 
@@ -160,7 +160,7 @@ void apic_timer_calibrate(void) {
 	uint64_t hpet_start = hpet_now();
 	lapic[apic_timer_init] = 0xffffffff;
 
-	while (hpet_now() < hpet_start + wait_time) continue;
+	while (hpet_now() - hpet_start < wait_time) continue;
 
 	lapic[apic_lvt_timer] = apic_lvt_mask;
 	uint32_t lapic_end = lapic[apic_timer_current];

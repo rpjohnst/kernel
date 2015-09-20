@@ -6,7 +6,6 @@
 #include "cpu.h"
 #include "interrupt.h"
 #include "page.h"
-#include "memory.h"
 #include <cache.h>
 #include <paging.h>
 #include <kprintf.h>
@@ -27,10 +26,9 @@ void kernel_init(void *memory_map, size_t map_size, size_t desc_size, void *Rsdp
 
 	hpet_enable();
 	apic_timer_calibrate();
+	tsc_calibrate();
+
 
 	__asm__ volatile ("sti");
-	for (;;) {
-		char c = serial_read(COM1);
-		serial_write(COM1, c);
-	}
+	while (true) __asm__ ("hlt");
 }
