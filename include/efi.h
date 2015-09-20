@@ -1,4 +1,6 @@
+#include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 typedef size_t efi_status;
 

@@ -45,8 +45,9 @@
 #define round_down(x, y) ((x) & ~((__typeof__(x))((y) - 1)))
 
 #include <stdint.h>
+#include <stddef.h>
 
-void direct_map(uint64_t start_phys, uint64_t end_phys);
+void paging_init(void *map_address, size_t map_size, size_t desc_size);
 
 static inline void write_cr3(uint64_t cr3) {
 	__asm__ volatile ("mov %0, %%cr3" :: "r"(cr3));

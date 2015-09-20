@@ -1,5 +1,5 @@
 #include "serial.h"
-#include "io.h"
+#include "cpu.h"
 
 void serial_init(uint16_t port) {
 	outb(port + 1, 0x00); // disable interrupts
