@@ -33,7 +33,7 @@ img/EFI/BOOT/BOOTX64.EFI: $(boot_SOURCES) | obj/ img/EFI/BOOT/
 kernel_CC := x86_64-elf-gcc
 kernel_LD := x86_64-elf-ld
 
-kernel_OBJECTS := obj/startup.o obj/segment.o obj/kernel.o obj/entry.o obj/interrupt.o obj/memory.o obj/paging.o obj/page.o obj/cache.o obj/serial.o obj/kprintf.o obj/panic.o obj/acpi/osl.o obj/acpi/acpica.o obj/libc/stdlib.o obj/libc/string.o obj/libc/ctype.o
+kernel_OBJECTS := obj/startup.o obj/segment.o obj/kernel.o obj/entry.o obj/interrupt.o obj/memory.o obj/paging.o obj/page.o obj/cache.o obj/hpet.o obj/apic.o obj/serial.o obj/kprintf.o obj/panic.o obj/acpi/parse.o obj/acpi/osl.o obj/acpi/acpica.o obj/libc/stdlib.o obj/libc/string.o obj/libc/ctype.o
 kernel_DEPENDS := $(patsubst %.o,%.d,$(kernel_OBJECTS))
 
 img/kernel: $(kernel_OBJECTS) src/kernel.ld | img/EFI/BOOT/

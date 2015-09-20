@@ -26,15 +26,18 @@ default_interrupt:
 	movl $0, 0xffffffffc00000b0
 	iretq
 
+	.global spurious_interrupt
+spurious_interrupt:
+	iretq
+
 	.macro isr handler error_code
 	.align 8
 	.global isr_\handler
 isr_\handler:
-	.if \error_code
-	mov (%rsp), %rsi
-	.else
+	cld
+
+	.if \error_code == 0
 	push $0
-	xor %rsi, %rsi
 	.endif
 
 	push %r15

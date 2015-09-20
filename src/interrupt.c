@@ -3,9 +3,6 @@
 #include <kprintf.h>
 #include <stdint.h>
 
-extern void default_exception();
-extern void default_interrupt();
-
 enum {
 	IDT_INTERRUPT = 0xe,
 	IDT_TRAP = 0xf,
@@ -29,6 +26,10 @@ static struct idt_entry {
 	.type = (t), \
 	.p = 1, \
 }
+
+extern void default_exception();
+extern void default_interrupt();
+extern void spurious_interrupt();
 
 extern void isr_divide_error();
 void divide_error(void *regs, uint64_t error_code) {
@@ -61,8 +62,9 @@ void interrupt_init() {
 	}
 
 	idt[0] = IDT_ENTRY((uint64_t)isr_divide_error, SEG_KERNEL_CODE, IDT_TRAP);
-	idt[13] = IDT_ENTRY((uint64_t) isr_general_protection_fault, SEG_KERNEL_CODE, IDT_TRAP);
+	idt[13] = IDT_ENTRY((uint64_t)isr_general_protection_fault, SEG_KERNEL_CODE, IDT_TRAP);
 	idt[14] = IDT_ENTRY((uint64_t)isr_page_fault, SEG_KERNEL_CODE, IDT_TRAP);
+	idt[39] = IDT_ENTRY((uint64_t)spurious_interrupt, SEG_KERNEL_CODE, IDT_TRAP);
 
 	struct idt_pointer {
 		uint16_t limit;

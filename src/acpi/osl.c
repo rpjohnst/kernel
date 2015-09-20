@@ -1,3 +1,4 @@
+#include <cache.h>
 #include <paging.h>
 #include <acpi/acpi.h>
 #include <kprintf.h>
@@ -55,10 +56,12 @@ ACPI_STATUS AcpiOsGetPhysicalAddress(void *LogicalAddress, ACPI_PHYSICAL_ADDRESS
 }
 
 void *AcpiOsAllocate(ACPI_SIZE Size) {
-	return NULL;
+	return kmalloc(Size);
 }
 
-void AcpiOsFree(void *Memory) {}
+void AcpiOsFree(void *Memory) {
+	kfree(Memory);
+}
 
 BOOLEAN AcpiOsReadable(void *Memory, ACPI_SIZE Length) {
 	return TRUE;
