@@ -269,8 +269,8 @@ void paging_init(void *map_address, size_t map_size, size_t desc_size) {
 	}
 
 	// reserve kernel image
-	extern char kernel_start[], kernel_end[];
-	memory_reserve(PHYS_KERNEL(kernel_start), kernel_end - kernel_start);
+	extern char kernel_begin[], kernel_end[];
+	memory_reserve(PHYS_KERNEL(kernel_begin), kernel_end - kernel_begin);
 
 	// direct mapping of ram
 	uint64_t i = 0, start_frame, end_frame;

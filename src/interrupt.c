@@ -27,28 +27,52 @@ static struct idt_entry {
 	.p = 1, \
 }
 
+struct registers {
+	uint64_t rax;
+	uint64_t rbx;
+	uint64_t rcx;
+	uint64_t rdx;
+	uint64_t rdi;
+	uint64_t rsi;
+	uint64_t rbp;
+	uint64_t r8;
+	uint64_t r9;
+	uint64_t r10;
+	uint64_t r11;
+	uint64_t r12;
+	uint64_t r13;
+	uint64_t r14;
+	uint64_t r15;
+	uint64_t error_code;
+	uint64_t rip;
+	uint64_t cs;
+	uint64_t rflags;
+	uint64_t rsp;
+	uint64_t ss;
+};
+
 extern void default_exception();
 extern void default_interrupt();
 extern void spurious_interrupt();
 
 extern void isr_divide_error();
-void divide_error(void *regs, uint64_t error_code) {
+void divide_error(struct registers *registers) {
 	kprintf("divide error\n");
 	for (;;);
 }
 
 extern void isr_general_protection_fault();
-void general_protection_fault(void *regs, uint64_t error_code) {
-	kprintf("general protection fault %#lx\n", error_code);
+void general_protection_fault(struct registers *registers) {
+	kprintf("general protection fault %#lx\n", registers->error_code);
 	for (;;);
 }
 
 extern void isr_page_fault();
-void page_fault(void *regs, uint64_t error_code) {
+void page_fault(struct registers *registers) {
 	uint64_t address;
 	__asm__ volatile ("mov %%cr2, %0" : "=r"(address));
 
-	kprintf("page fault %#016lx %#lx\n", address, error_code);
+	kprintf("page fault %#016lx %#lx\n", address, registers->error_code);
 	for (;;);
 }
 

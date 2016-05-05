@@ -2,7 +2,7 @@
 
 void tsc_calibrate(void);
 
-void udelay(uint64_t usecs);
+void tsc_udelay(uint64_t usecs);
 
 extern uint32_t tsc_frequency;
 

@@ -1,46 +1,9 @@
 #include "apic.h"
+#include "tsc.h"
 #include "cpu.h"
 #include "hpet.h"
 #include <paging.h>
 #include <kprintf.h>
-
-enum apic_registers {
-	apic_id = 0x20 >> 2,
-	apic_version = 0x030 >> 2,
-
-	apic_tpr = 0x080 >> 2,
-	apic_apr = 0x090 >> 2,
-	apic_ppr = 0x0a0 >> 2,
-
-	apic_eoi = 0x0b0 >> 2,
-
-	apic_rrr = 0x0c0 >> 2,
-	apic_ldr = 0x0d0 >> 2,
-	apic_dfr = 0x0e0 >> 2,
-
-	apic_spurious = 0x0f0 >> 2,
-
-	apic_isr = 0x100 >> 2,
-	apic_tmr = 0x180 >> 2,
-	apic_irr = 0x210 >> 2,
-
-	apic_ecr = 0x280 >> 2,
-
-	apic_icr_low = 0x300 >> 2,
-	apic_icr_high = 0x310 >> 2,
-
-	apic_lvt_timer = 0x320 >> 2,
-	apic_lvt_thermal = 0x330 >> 2,
-	apic_lvt_perf = 0x340 >> 2,
-	apic_lvt_lint0 = 0x350 >> 2,
-	apic_lvt_lint1 = 0x360 >> 2,
-	apic_lvt_err = 0x370 >> 2,
-
-	apic_timer_init = 0x380 >> 2,
-	apic_timer_current = 0x390 >> 2,
-	apic_timer_divide = 0x3e0 >> 2,
-};
-static const int apic_reg = 0x10 >> 2;
 
 enum apic_spurious_flags {
 	apic_sw_enable = 1 << 8,
@@ -61,34 +24,6 @@ enum apic_lvt_flags {
 	apic_timer_oneshot = 0x0 << 17,
 	apic_timer_periodic = 0x1 << 17,
 	apic_timer_tsc = 0x2 << 17,
-};
-
-enum apic_icr_flags {
-	apic_icr_dest_shift = 24,
-
-	apic_icr_shorthand_none = 0 << 18,
-	apic_icr_shorthand_self = 1 << 18,
-	apic_icr_shorthand_all = 2 << 18,
-	apic_icr_shorthand_others = 3 << 18,
-
-	apic_icr_edge = 0 << 15,
-	apic_icr_level = 1 << 15,
-
-	apic_icr_deassert = 0 << 14,
-	apic_icr_assert = 1 << 14,
-
-	apic_icr_idle = 0 << 12,
-	apic_icr_pending = 1 << 12,
-
-	apic_icr_physical = 0 << 11,
-	apic_icr_logical = 1 << 11,
-
-	apic_icr_fixed = 0 << 8,
-	apic_icr_lowest = 1 << 8,
-	apic_icr_smi = 2 << 8,
-	apic_icr_nmi = 4 << 8,
-	apic_icr_init = 5 << 8,
-	apic_icr_startup = 6 << 8,
 };
 
 static void pic_disable(void) {
@@ -129,6 +64,9 @@ static void pic_disable(void) {
 static volatile uint32_t *lapic;
 static uint32_t lapic_frequency;
 
+uint32_t lapic_count;
+SMP_PERCPU uint32_t lapic_id;
+
 void apic_init(uint32_t lapic_address, bool legacy_pic) {
 	if (legacy_pic)
 		pic_disable();
@@ -168,4 +106,30 @@ void apic_timer_calibrate(void) {
 	lapic_frequency = (0xffffffff - lapic_end) * 100;
 
 	kprintf("apic timer: %u.%06uMHz\n", lapic_frequency / 1000000, lapic_frequency % 1000000);
+}
+
+uint32_t apic_read(uint32_t reg) {
+	return lapic[reg];
+}
+
+void apic_icr_write(uint32_t high, uint32_t low) {
+	lapic[apic_icr_high] = high;
+	lapic[apic_icr_low] = low;
+}
+
+bool apic_icr_wait_idle(uint32_t msecs) {
+	bool pending;
+	for (uint32_t timeout = 0; timeout < 10 * msecs; timeout++) {
+		pending = lapic[apic_icr_low] & apic_icr_pending;
+		if (!pending)
+			break;
+
+		tsc_udelay(100);
+	}
+
+	return !pending;
+}
+
+uint32_t apic_esr_read(void) {
+	return lapic[apic_esr] & 0xef;
 }

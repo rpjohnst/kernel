@@ -35,7 +35,7 @@ void tsc_calibrate(void) {
 	kprintf("tsc: %u.%06uMHz\n", tsc_frequency / 1000000, tsc_frequency % 1000000);
 }
 
-void udelay(uint64_t usecs) {
+void tsc_udelay(uint64_t usecs) {
 	uint64_t wait_time = tsc_frequency / 1000000 * usecs;
 
 	uint64_t start_time = rdtsc();
