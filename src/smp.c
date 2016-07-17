@@ -13,19 +13,23 @@ extern volatile uint64_t startup_stack;
 extern volatile uint64_t startup_code;
 extern volatile uint64_t startup_gs;
 
-#define TRAMPOLINE_SYM(base, sym) (void*)((unsigned char*)(base) + (uintptr_t)(sym))
-extern volatile uint32_t smp_ap_started[];
+#define TRAMPOLINE_SYM(base, sym) \
+	*(__typeof__(sym)*)((char*)(base) + (uintptr_t)&(sym))
+
+extern volatile uint32_t smp_ap_started;
 
 // TODO: put in .startup.data
 uint8_t lapic_by_cpu[256];
 
 void *percpu_data[256];
 
+SMP_PERCPU uint32_t smp_id;
+
 static volatile bool ap_initialized = true;
 void smp_start(void) {
 	ap_initialized = true;
 
-	kprintf("cpu %d started\n", 99);
+	kprintf("cpu %d started\n", SMP_PERCPU_READ(smp_id));
 	while (true) __asm__ ("hlt");
 }
 
@@ -44,7 +48,7 @@ void smp_init(void) {
 		kprintf("cpu %d: %d\n", i, lapic_by_cpu[i]);
 	}
 
-	volatile uint32_t *ap_started = TRAMPOLINE_SYM(trampoline, smp_ap_started);
+	volatile uint32_t *ap_started = &TRAMPOLINE_SYM(trampoline, smp_ap_started);
 	startup_code = (uintptr_t)smp_start;
 
 	uint32_t bsp_id = apic_read(apic_id);
@@ -56,6 +60,8 @@ void smp_init(void) {
 
 		percpu_data[i] = (char*)percpu + i * percpu_size;
 		memcpy(percpu_data[i], percpu_begin, percpu_size);
+
+		SMP_PERCPU_SYM(i, smp_id) = i;
 
 		// wait for the last AP to finish using the trampoline
 		while (!ap_initialized) {

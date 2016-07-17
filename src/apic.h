@@ -79,4 +79,3 @@ bool apic_icr_wait_idle(uint32_t msecs);
 uint32_t apic_esr_read(void);
 
 extern uint32_t lapic_count;
-extern SMP_PERCPU uint32_t lapic_id;

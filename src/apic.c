@@ -65,7 +65,6 @@ static volatile uint32_t *lapic;
 static uint32_t lapic_frequency;
 
 uint32_t lapic_count;
-SMP_PERCPU uint32_t lapic_id;
 
 void apic_init(uint32_t lapic_address, bool legacy_pic) {
 	if (legacy_pic)

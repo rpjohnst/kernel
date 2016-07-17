@@ -40,7 +40,7 @@ img/kernel: $(kernel_OBJECTS) src/kernel.ld | img/EFI/BOOT/
 	$(kernel_CC) -ffreestanding -nostdlib -T src/kernel.ld -n -Wl,--gc-sections -o $@ $(kernel_OBJECTS)
 
 obj/%.o: src/%.c | $$(dir $$@)
-	$(kernel_CC) $(CFLAGS) -Wall -Wextra -Wpedantic -Wno-unused-parameter -mno-mmx -mno-sse -mno-sse2 -mno-red-zone -mcmodel=kernel -Iinclude -c -o $@ $<
+	$(kernel_CC) $(CFLAGS) -Wall -Wextra -Wpedantic -Wno-unused-parameter -Werror -mno-mmx -mno-sse -mno-sse2 -mno-red-zone -mcmodel=kernel -Iinclude -c -o $@ $<
 
 obj/%.o: src/%.S | $$(dir $$@)
 	$(kernel_CC) -Iinclude -D__ASSEMBLY__ -c -o $@ $<
