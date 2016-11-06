@@ -1,4 +1,3 @@
-#include "smp.h"
 #include <stdint.h>
 #include <stdbool.h>
 

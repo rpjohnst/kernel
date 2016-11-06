@@ -1,3 +1,5 @@
+#include "smp.h"
+#include "spinlock.h"
 #include "apic.h"
 #include "tsc.h"
 #include "memory.h"
@@ -25,11 +27,16 @@ void *percpu_data[256];
 
 SMP_PERCPU uint32_t smp_id;
 
+static struct spinlock print_lock;
 static volatile bool ap_initialized = true;
 void smp_start(void) {
 	ap_initialized = true;
 
+	struct spinlock_node node;
+	spin_lock(&print_lock, &node);
 	kprintf("cpu %d started\n", SMP_PERCPU_READ(smp_id));
+	spin_unlock(&print_lock, &node);
+
 	while (true) __asm__ ("hlt");
 }
 

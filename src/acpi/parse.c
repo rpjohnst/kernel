@@ -1,6 +1,7 @@
 #include "parse.h"
 #include "../apic.h"
 #include "../hpet.h"
+#include "../smp.h"
 #include <kprintf.h>
 #include <assert.h>
 #include <stdbool.h>
