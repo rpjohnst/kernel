@@ -7,6 +7,8 @@
 #include <stdbool.h>
 
 static void madt_parse(ACPI_TABLE_MADT *Madt) {
+	apic_init(Madt->Address, Madt->Flags & ACPI_MADT_PCAT_COMPAT);
+
 	for (
 		ACPI_SUBTABLE_HEADER *Apic = (ACPI_SUBTABLE_HEADER*)(Madt + 1);
 		(char*)Apic < (char*)Madt + Madt->Header.Length;
@@ -23,14 +25,15 @@ static void madt_parse(ACPI_TABLE_MADT *Madt) {
 			break;
 		}
 
-#if 0
-		// TODO: handle x2APIC
 		case ACPI_MADT_TYPE_LOCAL_X2APIC: {
 			ACPI_MADT_LOCAL_X2APIC *p = (ACPI_MADT_LOCAL_X2APIC *)Apic;
-			kprintf("X2APIC %d %d %d\n", p->LocalApicId, p->LapicFlags, p->Uid);
+			if (!(p->LapicFlags & 0x1))
+				break;
+
+			lapic_by_cpu[lapic_count] = p->LocalApicId;
+			lapic_count++;
 			break;
 		}
-#endif
 
 #if 0
 		// TODO: initialize ioapic
@@ -80,6 +83,13 @@ void acpi_parse(ACPI_TABLE_RSDP *Rsdp) {
 		panic("acpi error %d\n", status);
 	}
 
+	ACPI_TABLE_MADT *Madt = NULL;
+	AcpiGetTable(ACPI_SIG_MADT, 0, (ACPI_TABLE_HEADER**)&Madt);
+	if (Madt == NULL) {
+		panic("no madt available");
+	}
+	madt_parse(Madt);
+
 	ACPI_TABLE_HPET *Hpet = NULL;
 	AcpiGetTable(ACPI_SIG_HPET, 0, (ACPI_TABLE_HEADER**)&Hpet);
 	if (Hpet == NULL) {
@@ -87,12 +97,4 @@ void acpi_parse(ACPI_TABLE_RSDP *Rsdp) {
 	}
 	hpet_init(Hpet->Address.Address);
 
-	ACPI_TABLE_MADT *Madt = NULL;
-	AcpiGetTable(ACPI_SIG_MADT, 0, (ACPI_TABLE_HEADER**)&Madt);
-	if (Madt == NULL) {
-		panic("no madt available");
-	}
-
-	apic_init(Madt->Address, Madt->Flags & ACPI_MADT_PCAT_COMPAT);
-	madt_parse(Madt);
 }

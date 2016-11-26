@@ -42,7 +42,7 @@ static volatile struct hpet *hpet;
 void hpet_init(uint64_t hpet_address) {
 	// TODO: factor out temporary mappings
 	extern uint64_t kernel_pml4[], pt_map[];
-	pt_map[1] = hpet_address | PAGE_PRESENT | PAGE_WRITE;
+	pt_map[1] = hpet_address | PAGE_PRESENT | PAGE_WRITE | PAGE_CACHE_UC | PAGE_GLOBAL;
 	write_cr3(PHYS_KERNEL(kernel_pml4));
 	hpet = (volatile struct hpet*)0xffffffffc0001000;
 

@@ -1,7 +1,7 @@
 #include "smp.h"
 #include "tsc.h"
-#include "apic.h"
 #include "hpet.h"
+#include "apic.h"
 #include "acpi/parse.h"
 #include "serial.h"
 #include "cpu.h"
@@ -13,7 +13,6 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stddef.h>
-#include <stdbool.h>
 
 void kernel_init(void *memory_map, size_t map_size, size_t desc_size, void *Rsdp) {
 	interrupt_init();

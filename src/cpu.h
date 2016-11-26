@@ -1,3 +1,5 @@
+#include <stdint.h>
+
 // io ports
 
 static inline void outb(uint16_t port, uint8_t value) {
@@ -16,13 +18,19 @@ static inline void cpuid(uint32_t i, uint32_t *eax, uint32_t *ebx, uint32_t *ecx
 	__asm__ volatile ("cpuid" : "=a"(*eax), "=b"(*ebx), "=c"(*ecx), "=d"(*edx) : "a"(i));
 }
 
+enum cpuid_flags {
+	cpuid_01_ecx_x2apic = 1 << 21,
+};
+
 // msrs
 
 enum msr {
 	ia32_apic_base = 0x1b,
+	x2apic_base = 0x800,
 };
 
 enum msr_flags {
+	apic_x2apic_enable = 1 << 10,
 	apic_global_enable = 1 << 11,
 };
 

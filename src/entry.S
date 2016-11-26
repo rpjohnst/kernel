@@ -20,10 +20,15 @@ default_exception:
 	jmp 1b
 
 	.global default_interrupt
+	.extern apic
 default_interrupt:
 	mov $timer, %rdi
 	call kprintf
-	movl $0, 0xffffffffc00000b0
+	mov apic(%rip), %rax
+	mov 16(%rax), %rax
+	mov $0x0b, %rdi
+	mov $0, %rsi
+	call %rax
 	iretq
 
 	.global spurious_interrupt

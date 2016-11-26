@@ -51,10 +51,6 @@ void smp_init(void) {
 	uint64_t percpu_size = percpu_end - percpu_begin + PAGE_SIZE;
 	void *percpu = memory_alloc(0x100000, memory_end(), lapic_count * percpu_size, PAGE_SIZE);
 
-	for (unsigned i = 0; i < lapic_count; i++) {
-		kprintf("cpu %d: %d\n", i, lapic_by_cpu[i]);
-	}
-
 	volatile uint32_t *ap_started = &TRAMPOLINE_SYM(trampoline, smp_ap_started);
 	startup_code = (uintptr_t)smp_start;
 
@@ -80,9 +76,9 @@ void smp_init(void) {
 		startup_gs = (uintptr_t)percpu_data[i];
 		startup_stack = (uintptr_t)percpu_data[i] + percpu_size;
 
-		uint32_t target = apic_id << 24;
-
-		apic_icr_write(target, apic_icr_assert | apic_icr_init);
+		apic_icr_write(apic_id, apic_icr_level | apic_icr_assert | apic_icr_init);
+		apic_icr_wait_idle(100);
+		apic_icr_write(apic_id, apic_icr_level | apic_icr_deassert | apic_icr_init);
 		apic_icr_wait_idle(100);
 
 		// MP spec says wait 10ms here, but newer CPUs don't need it (e.g. intel family 6+)
@@ -91,13 +87,10 @@ void smp_init(void) {
 		uint8_t error = 0;
 		for (int i = 0; i < 2; i++) {
 			// start execution on the target core at CS:IP = (trampoline >> 4):0
-			apic_icr_write(
-				target, apic_icr_assert | apic_icr_startup | (trampoline >> PAGE_SHIFT)
-			);
-
-			tsc_udelay(200);
-
+			apic_icr_write(apic_id, apic_icr_startup | (trampoline >> PAGE_SHIFT));
+			tsc_udelay(10);
 			sent = apic_icr_wait_idle(100);
+			tsc_udelay(10);
 
 			error = apic_esr_read();
 			if (!sent || error || *ap_started)
@@ -111,5 +104,4 @@ void smp_init(void) {
 		if (!*ap_started)
 			kprintf("apic: [%d] ap didn't set flag\n", i);
 	}
-
 }
