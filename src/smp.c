@@ -90,7 +90,7 @@ void smp_init(void) {
 			apic_icr_write(apic_id, apic_icr_startup | (trampoline >> PAGE_SHIFT));
 			tsc_udelay(10);
 			sent = apic_icr_wait_idle(100);
-			tsc_udelay(10);
+			tsc_udelay(200);
 
 			error = apic_esr_read();
 			if (!sent || error || *ap_started)

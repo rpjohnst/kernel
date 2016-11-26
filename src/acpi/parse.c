@@ -2,6 +2,7 @@
 #include "../apic.h"
 #include "../hpet.h"
 #include "../smp.h"
+#include "../pci.h"
 #include <kprintf.h>
 #include <assert.h>
 #include <stdbool.h>
@@ -71,6 +72,19 @@ static void madt_parse(ACPI_TABLE_MADT *Madt) {
 	}
 }
 
+static void mcfg_parse(ACPI_TABLE_MCFG *Mcfg) {
+	for (
+		ACPI_MCFG_ALLOCATION *Allocation = (ACPI_MCFG_ALLOCATION*)(Mcfg + 1);
+		(char*)Allocation < (char*)Mcfg + Mcfg->Header.Length;
+		Allocation++
+	) {
+		pci_add_segment(
+			Allocation->PciSegment, Allocation->Address,
+			Allocation->StartBusNumber, Allocation->EndBusNumber
+		);
+	}
+}
+
 #define ACPI_TABLE_COUNT 128
 static ACPI_TABLE_DESC acpi_tables[ACPI_TABLE_COUNT];
 
@@ -97,4 +111,10 @@ void acpi_parse(ACPI_TABLE_RSDP *Rsdp) {
 	}
 	hpet_init(Hpet->Address.Address);
 
+	ACPI_TABLE_MCFG *Mcfg = NULL;
+	AcpiGetTable(ACPI_SIG_MCFG, 0, (ACPI_TABLE_HEADER**)&Mcfg);
+	if (Mcfg == NULL) {
+		panic("no mcfg available");
+	}
+	mcfg_parse(Mcfg);
 }

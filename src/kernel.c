@@ -1,3 +1,4 @@
+#include "pci.h"
 #include "smp.h"
 #include "tsc.h"
 #include "hpet.h"
@@ -29,6 +30,8 @@ void kernel_init(void *memory_map, size_t map_size, size_t desc_size, void *Rsdp
 
 	page_alloc_init();
 	cache_init();
+
+	pci_enumerate();
 
 #if 0
 	ACPI_STATUS status = AcpiInitializeSubsystem();
